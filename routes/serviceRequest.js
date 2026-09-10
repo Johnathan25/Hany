@@ -7,6 +7,7 @@ const {
   deleteServiceRequest,
   getAllServiceRequests,
   getCustomerServiceRequests,
+  getPaymentStatus
 } = require("../controllers/services/serviceRequest");
 
 const authMiddleware = require("../middlewares/authMiddleware");
