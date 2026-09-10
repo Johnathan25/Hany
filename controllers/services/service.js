@@ -295,6 +295,69 @@ exports.getAllPricing = async (req, res) => {
 };
 
 
+exports.getPricingByName = async (req, res) => {
+  try {
+    const { name } = req.params;
+
+    const allowedTypes = [
+      "inspection",
+      "consultation",
+      "maintenance",
+    ];
+
+    if (!allowedTypes.includes(name)) {
+      return res.status(400).json({
+        success: false,
+        message: "نوع الخدمة غير صحيح",
+      });
+    }
+
+    const pricing = await ServicePricing.findOne()
+      .sort({ createdAt: -1 })
+      .lean();
+
+    if (!pricing) {
+      return res.status(404).json({
+        success: false,
+        message: "أسعار الخدمات غير موجودة",
+      });
+    }
+
+    let price;
+
+    switch (name) {
+      case "inspection":
+        price = pricing.inspectionPrice;
+        break;
+
+      case "consultation":
+        price = pricing.consultationPrice;
+        break;
+
+      case "maintenance":
+        price = pricing.maintenanceDeposit;
+        break;
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        name,
+        price,
+        currency: "EGP",
+      },
+    });
+  } catch (error) {
+    console.error("Get Pricing By Name Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "حدث خطأ في السيرفر",
+      error: error.message,
+    });
+  }
+};
+
 // =========================
 // Update Pricing
 // =========================

@@ -15,6 +15,7 @@ const {
   createPricing,
   getAllPricing,
   updatePricing,
+  getPricingByName
 } = require("../controllers/services/service");
 
 
@@ -36,6 +37,12 @@ router.get("/items/:id", getItemById);
 
 // Get All Pricing
 router.get("/pricing", getAllPricing);
+
+// getPricingByName
+router.get("/getPricingByName", getPricingByName);
+
+
+
 
 // protected routes
 // router.use(authMiddleware.protected);
