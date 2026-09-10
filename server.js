@@ -22,6 +22,7 @@ const userRoute=require(`${__dirname}/routes/users/Auth`);
 const admins =require(`${__dirname}/routes/users/admin`);
 const paymentRoutes = require("./routes/paymentRoutes");
 const serviceRequest = require("./routes/serviceRequest");
+const complaintRoutes = require("./routes/complaintRoutes");
 
 config.connectDB(process.env.DATABASE);
 
@@ -39,6 +40,8 @@ app.use('/v1/serviceMangement',serviceRoutes);
 app.use('/v1/serviceRequests',serviceRequest);
 
 app.use("/v1/admins",admins)
+app.use("/v1/complaints", complaintRoutes);
+
 app.use("/api/webhooks", paymentRoutes);
 
 
