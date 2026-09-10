@@ -164,6 +164,54 @@ exports.login = async (req, res) => {
   }
 };
 
+
+// signUp 
+exports.signUp = async (req, res) => {
+  try {
+    const {userName, email, password , address ,phoneNumber } = req.body;
+    if (!userName || !email || !password) {
+      return res.status(400).json({ message: "الرجاء توفير جميع الحقول المطلوبة" });
+    }
+  const existingUser = await User.findOne(
+ 
+    { email }
+  
+  
+);
+    if (existingUser) {
+      return res.status(400).json({ message: "البريد الإلكتروني  مستخدم بالفعل" });
+    }
+  const existingUser2 = await User.findOne(
+ 
+    { phoneNumber }
+  
+  
+);
+
+    if (existingUser2) {
+      return res.status(400).json({ message: "   رقم الهاتف مستخدم بالفعل" });
+    }
+
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({
+      userName,
+        email,
+        password: hashedPassword,
+        address,
+        phoneNumber
+    });
+
+
+    await newUser.save();
+    res.status(201).json({ message: "تم إنشاء الحساب بنجاح" });
+
+  } catch (err) {
+    console.error("خطأ في تسجيل الدخول:", err);
+    res.status(500).json({ message: "خطأ داخلي في الخادم", error: err.message });
+  }
+};
+
 // logout
 exports.userLogout = async (req, res) => {
   try {

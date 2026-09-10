@@ -5,6 +5,8 @@ const usersController = require(`${__dirname}/../../controllers/authontication/a
 
 // login route
 router.post('/login', usersController.login);
+router.post('/sign-up', usersController.signUp);
+
 
 // refresh token
 router.post('/refresh-token', usersController.refreshToken);
