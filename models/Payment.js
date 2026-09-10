@@ -5,7 +5,7 @@ const paymentSchema = new mongoose.Schema(
     // customer refrence
     customer: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Customer",
+      ref: "User",
       required: true,
     },
 

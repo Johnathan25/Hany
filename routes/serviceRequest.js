@@ -38,6 +38,13 @@ router.delete(
 );
 
 
+router.get(
+  "/payment-status/:orderNumber",
+  authMiddleware.protected,
+  getPaymentStatus
+);
+
+
 // =====================================================
 // Admin Routes
 // =====================================================

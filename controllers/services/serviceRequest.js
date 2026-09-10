@@ -473,3 +473,57 @@ exports.getCustomerServiceRequests = async (req, res) => {
     });
   }
 };
+
+
+
+// Get Payment Status
+exports.getPaymentStatus = async (req, res) => {
+  try {
+    const { orderNumber } = req.params;
+
+    if (!orderNumber) {
+      return res.status(400).json({
+        success: false,
+        message: "رقم الطلب مطلوب",
+      });
+    }
+
+    const payment = await Payment.findOne({
+      reference: orderNumber,
+    })
+      .select(
+        "status amount currency paymentType transactionId paidAt reference payableId"
+      )
+      .lean();
+
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: "عملية الدفع غير موجودة",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        orderNumber: payment.reference,
+        paymentId: payment._id,
+        status: payment.status,
+        amount: payment.amount,
+        currency: payment.currency,
+        paymentType: payment.paymentType,
+        transactionId: payment.transactionId || null,
+        paidAt: payment.paidAt || null,
+      },
+    });
+
+  } catch (error) {
+    console.error("Get Payment Status Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "حدث خطأ في السيرفر",
+      error: error.message,
+    });
+  }
+};

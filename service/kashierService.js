@@ -7,6 +7,7 @@ class KashierService {
     this.merchantId = process.env.KASHIER_MERCHANT_ID;
     this.baseUrl = process.env.KASHIER_BASE_URL || 'https://test-api.kashier.io';
     this.baseRedirectUrl = process.env.BASE_URL;
+    this.frontendUrl = process.env.FRONTEND_URL;
   }
 
 // Helper to get headers
@@ -33,7 +34,8 @@ class KashierService {
         amount: order.amount.toFixed(2),
         currency: order.currency || 'EGP',
         order: order.orderNumber,
-        merchantRedirect: `${this.baseRedirectUrl}/api/webhooks/redirect`,
+         merchantRedirect:
+        `${this.frontendUrl}/payment?order=${order.orderNumber}`,
         display: 'en',
         type: 'one-time',
         allowedMethods: 'card,wallet',
