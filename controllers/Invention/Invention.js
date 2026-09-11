@@ -289,3 +289,175 @@ exports.deleteInvention = async (req, res) => {
   }
 };
 
+
+
+// client side, you can use the following code to fetch the inventions with pagination and search:
+
+
+exports.getActiveInventions = async (req, res) => {
+  try {
+    let {
+      page = 1,
+      limit = 10,
+      search = "",
+    } = req.query;
+
+    page = Math.max(parseInt(page) || 1, 1);
+    limit = Math.max(parseInt(limit) || 10, 1);
+
+    const skip = (page - 1) * limit;
+
+    // ==========================================
+    // Filter
+    // البراءة نفسها لازم تكون Active
+    // ==========================================
+
+    const filter = {
+      isActive: true,
+    };
+
+    // ==========================================
+    // Search
+    // ==========================================
+
+    if (search.trim()) {
+      filter.$or = [
+        {
+          title: {
+            $regex: search.trim(),
+            $options: "i",
+          },
+        },
+        {
+          shortDescription: {
+            $regex: search.trim(),
+            $options: "i",
+          },
+        },
+        {
+          description: {
+            $regex: search.trim(),
+            $options: "i",
+          },
+        },
+        {
+          details: {
+            $regex: search.trim(),
+            $options: "i",
+          },
+        },
+      ];
+    }
+
+    // ==========================================
+    // Get Data
+    // ==========================================
+
+    const [inventions, total] = await Promise.all([
+      Invention.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+
+      Invention.countDocuments(filter),
+    ]);
+
+    // ==========================================
+    // إخفاء الأسعار غير النشطة
+    // ==========================================
+
+    const data = inventions.map((invention) => ({
+      ...invention,
+
+      pricingOptions: (invention.pricingOptions || []).filter(
+        (option) => option.isActive === true
+      ),
+    }));
+
+    const totalPages = Math.ceil(total / limit);
+
+    // ==========================================
+    // Response
+    // ==========================================
+
+    return res.status(200).json({
+      message: "تم جلب براءات الاختراع بنجاح",
+
+      data,
+
+      pagination: {
+        currentPage: page,
+        limit,
+
+        totalItems: total,
+        totalPages,
+
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    });
+  } catch (error) {
+    console.error("getActiveInventions error:", error);
+
+    return res.status(500).json({
+      message: "خطأ داخلي في الخادم",
+      error: error.message,
+    });
+  }
+};
+
+
+// ==========================================
+// GET ACTIVE INVENTION BY ID
+// ==========================================
+exports.getActiveInventionById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const invention = await Invention.findOne({
+      _id: id,
+      isActive: true,
+    }).lean();
+
+    // ==========================================
+    // لو البراءة مش موجودة أو Inactive
+    // ==========================================
+
+    if (!invention) {
+      return res.status(404).json({
+        message: "براءة الاختراع غير موجودة",
+      });
+    }
+
+    // ==========================================
+    // إظهار الأسعار النشطة فقط
+    // ==========================================
+
+    invention.pricingOptions = (
+      invention.pricingOptions || []
+    ).filter(
+      (option) => option.isActive === true
+    );
+
+    return res.status(200).json({
+      message: "تم جلب براءة الاختراع بنجاح",
+
+      invention,
+    });
+  } catch (error) {
+    console.error("getActiveInventionById error:", error);
+
+    if (error.name === "CastError") {
+      return res.status(400).json({
+        message: "ID غير صحيح",
+      });
+    }
+
+    return res.status(500).json({
+      message: "خطأ داخلي في الخادم",
+      error: error.message,
+    });
+  }
+};
+
