@@ -11,6 +11,11 @@ const serviceRequestSchema = new mongoose.Schema(
        type:String,
        unique:true,
     },
+        phone:{
+      type:String,
+      required:true,
+    },
+
 
 
     serviceItem: {
