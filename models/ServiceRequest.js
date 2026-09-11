@@ -11,11 +11,10 @@ const serviceRequestSchema = new mongoose.Schema(
        type:String,
        unique:true,
     },
-        phone:{
+    phone:{
       type:String,
-    
+      required:true,
     },
-
 
 
     serviceItem: {
@@ -53,10 +52,15 @@ const serviceRequestSchema = new mongoose.Schema(
       ],
       default: "unpaid",
     },
-
-
-
-    adminNotes: {
+    userName: {
+      type: String,
+      trim: true,
+    },
+    address: {
+      type: String,
+      trim: true,
+    },
+adminNotes: {
       type: String,
       trim: true,
     },
