@@ -39,7 +39,7 @@ router.get("/items/:id", getItemById);
 router.get("/pricing", getAllPricing);
 
 // getPricingByName
-router.get("/getPricingByName", getPricingByName);
+router.get("/getPricingByName/:name", getPricingByName);
 
 
 

@@ -81,43 +81,54 @@ exports.createManyItems = async (req, res) => {
 // =========================
 exports.getAllItems = async (req, res) => {
   try {
-
     const page = Math.max(Number(req.query.page) || 1, 1);
 
-    const limit = Math.max(Number(req.query.limit) || 10, 1);
+    const limit = Math.min(
+      Math.max(Number(req.query.limit) || 10, 1),
+      100
+    );
+
+    const search = req.query.search?.trim() || "";
+
+    const filter = {};
+
+    if (search) {
+      filter.name = {
+        $regex: search,
+        $options: "i",
+      };
+    }
 
     const skip = (page - 1) * limit;
 
-    
     const [items, totalItems] = await Promise.all([
-      ServiceItem.find()
+      ServiceItem.find(filter)
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(limit),
+        .limit(limit)
+        .lean(),
 
-      ServiceItem.countDocuments(),
+      ServiceItem.countDocuments(filter),
     ]);
 
-    // إجمالي عدد الصفحات
     const totalPages = Math.ceil(totalItems / limit);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-
       data: items,
-
       pagination: {
         currentPage: page,
-        limit: limit,
-        totalItems: totalItems,
-        totalPages: totalPages,
-
+        limit,
+        totalItems,
+        totalPages,
         hasNextPage: page < totalPages,
         hasPrevPage: page > 1,
       },
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Get All Items Error:", error);
+
+    return res.status(500).json({
       success: false,
       message: "حدث خطأ في السيرفر",
       error: error.message,
