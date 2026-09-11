@@ -363,7 +363,7 @@ exports.getAllServiceRequests = async (req, res) => {
         ServiceRequest.find()
           .populate(
             "customer",
-            "name phone email address"
+            "userName phone email address"
           )
           .populate(
             "serviceItem",
