@@ -23,7 +23,9 @@ exports.createServiceRequest = async (req, res) => {
       serviceItem,
       requestType,
       description,
-      phone
+      phone,
+      address,
+      userName,
     } = req.body;
 
     // =========================================
@@ -122,6 +124,8 @@ exports.createServiceRequest = async (req, res) => {
           phone,
           currency: "EGP",
           status: "unpaid",
+            address,
+            userName,
         },
       ],
       { session }
