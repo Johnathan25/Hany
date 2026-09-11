@@ -16,7 +16,6 @@ const serviceRequestSchema = new mongoose.Schema(
       required:true,
     },
 
-    
 
     serviceItem: {
       type: mongoose.Schema.Types.ObjectId,
