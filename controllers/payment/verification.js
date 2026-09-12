@@ -47,7 +47,7 @@ exports.kashierWebhook = async (req, res) => {
     // البحث عن Payment عن طريق orderNumber
     const payment = await Payment.findOne({
       reference: merchantOrderId,
-      payableType: "ServiceRequest",
+      
     });
 
     if (!payment) {

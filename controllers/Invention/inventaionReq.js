@@ -17,7 +17,6 @@ exports.createInventionRequest = async (req, res) => {
     const {
       inventionId,
       pricingOptionId,
-
       customerName,
       phone,
       address,
