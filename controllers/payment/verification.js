@@ -147,7 +147,7 @@ exports.paymentRedirect = async (req, res) => {
 exports.createAdminPayment = async (req, res) => {
   try {
     const {
-      customer,
+      customer, // ID أو كائن العميل إن وجد
       payableType,
       payableId,
       amount,
@@ -161,12 +161,7 @@ exports.createAdminPayment = async (req, res) => {
     // -----------------------------
     // Validation
     // -----------------------------
-
-    if (
-      !["ServiceRequest", "InventionRequest", "other"].includes(
-        payableType
-      )
-    ) {
+    if (!["ServiceRequest", "InventionRequest", "other"].includes(payableType)) {
       return res.status(400).json({
         message: "نوع الفاتورة غير صحيح",
       });
@@ -190,208 +185,99 @@ exports.createAdminPayment = async (req, res) => {
       });
     }
 
-    if (!name || !email || !phone) {
-      return res.status(400).json({
-        message: "بيانات العميل مطلوبة",
-      });
-    }
-
-    // -----------------------------
-    // Get customer
-    // -----------------------------
-
-    // لو عندك customer ID وعايز تربطه بالـ Payment
-    // هنعمله هنا.
-    //
-    // حاليًا لو الدفع ممكن يكون لشخص غير مسجل:
-    const customerId = customer || null;
-
     // -----------------------------
     // Generate invoice number
     // -----------------------------
-
     const invoiceNumber = `INV-${Date.now()}`;
 
     // -----------------------------
-    // Create Payment
+    // Create Payment Record
     // -----------------------------
-
     const payment = await Payment.create({
       invoiceNumber,
-
-      customer: customerId,
-
-      name: name.trim(),
-
-      email: email.trim(),
-
-      phone: phone.trim(),
-
+      customer: customer || null,
+      name,
+      email,
+      phone,
       payableType,
-
-      payableId:
-        payableType === "other"
-          ? undefined
-          : payableId,
-
+      payableId: payableType === "other" ? undefined : payableId,
       amount: Number(amount),
-
       currency: "EGP",
-
       paymentType,
-
       description,
-
       status: "pending",
-
       provider: "kashier",
     });
 
     // -----------------------------
     // Create Kashier Session
     // -----------------------------
-
-    const kashierResult =
-      await kashierService.createSession({
-        amount: payment.amount,
-
-        currency: payment.currency,
-
-        orderNumber: payment.invoiceNumber,
-
-        customer: {
-          _id: payment.customer,
-
-          name: payment.name,
-
-          email: payment.email,
-
-          phone: payment.phone,
-        },
-      });
-
-    // -----------------------------
-    // Kashier Error
-    // -----------------------------
+    const kashierResult = await kashierService.createSession({
+      amount: payment.amount,
+      currency: payment.currency,
+      orderNumber: payment.invoiceNumber,
+      customer: {
+        _id: payment.customer ? payment.customer.toString() : payment._id.toString(),
+        name: payment.name,
+        email: payment.email,
+        phone: payment.phone,
+      },
+    });
 
     if (!kashierResult.success) {
-      await Payment.findByIdAndUpdate(
-        payment._id,
-        {
-          status: "failed",
-
-          gatewayResponse:
-            kashierResult.error,
-        }
-      );
+      await Payment.findByIdAndUpdate(payment._id, {
+        status: "failed",
+        gatewayResponse: kashierResult.error,
+      });
 
       return res.status(400).json({
         message: "فشل إنشاء رابط الدفع",
-
         error: kashierResult.error,
       });
     }
 
     // -----------------------------
-    // Extract Kashier Response
+    // Extract Kashier response
     // -----------------------------
-
-    const gatewayData =
-      kashierResult.data;
-
+    const gatewayData = kashierResult.data;
+    
+    // Kashier v3 response standard mapping
     const paymentUrl =
+      gatewayData.sessionUrl ||
       gatewayData.paymentUrl ||
       gatewayData.url ||
-      gatewayData.redirectUrl ||
-      gatewayData.checkoutUrl;
-
-    if (!paymentUrl) {
-      await Payment.findByIdAndUpdate(
-        payment._id,
-        {
-          status: "failed",
-
-          gatewayResponse: gatewayData,
-        }
-      );
-
-      return res.status(400).json({
-        message:
-          "تم إنشاء جلسة الدفع ولكن لم يتم الحصول على رابط الدفع",
-      });
-    }
+      gatewayData.redirectUrl;
 
     // -----------------------------
     // Update Payment
     // -----------------------------
-
-    payment.sessionId =
-      gatewayData.sessionId ||
-      gatewayData.id;
-
-    payment.paymentLinkId =
-      gatewayData.paymentLinkId ||
-      gatewayData.paymentLink?.id;
-
-    payment.paymentUrl =
-      paymentUrl;
-
-    payment.gatewayResponse =
-      gatewayData;
-
+    payment.sessionId = gatewayData._id || gatewayData.sessionId || gatewayData.id;
+    payment.paymentUrl = paymentUrl;
+    payment.gatewayResponse = gatewayData;
     await payment.save();
 
     // -----------------------------
     // Response
     // -----------------------------
-
     return res.status(201).json({
       success: true,
-
-      message:
-        "تم إنشاء الفاتورة ورابط الدفع بنجاح",
-
+      message: "تم إنشاء الفاتورة ورابط الدفع بنجاح",
       data: {
         paymentId: payment._id,
-
-        invoiceNumber:
-          payment.invoiceNumber,
-
-        amount:
-          payment.amount,
-
-        currency:
-          payment.currency,
-
-        paymentType:
-          payment.paymentType,
-
-        payableType:
-          payment.payableType,
-
-        payableId:
-          payment.payableId,
-
-        status:
-          payment.status,
-
-        paymentUrl:
-          payment.paymentUrl,
+        invoiceNumber: payment.invoiceNumber,
+        amount: payment.amount,
+        currency: payment.currency,
+        paymentType: payment.paymentType,
+        payableType: payment.payableType,
+        status: payment.status,
+        paymentUrl: payment.paymentUrl,
       },
     });
-
   } catch (error) {
-    console.error(
-      "Create Admin Payment Error:",
-      error
-    );
-
+    console.error("Create Admin Payment Error:", error);
     return res.status(500).json({
       success: false,
-
-      message:
-        "حدث خطأ داخلي في الخادم",
-
+      message: "حدث خطأ داخلي في الخادم",
       error: error.message,
     });
   }
