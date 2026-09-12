@@ -162,9 +162,11 @@ exports.createAdminPayment = async (req, res) => {
     // Validation
     // -----------------------------
 
-
-
-    if (!["ServiceRequest", "InventionRequest", "other"].includes(payableType)) {
+    if (
+      !["ServiceRequest", "InventionRequest", "other"].includes(
+        payableType
+      )
+    ) {
       return res.status(400).json({
         message: "نوع الفاتورة غير صحيح",
       });
@@ -188,13 +190,21 @@ exports.createAdminPayment = async (req, res) => {
       });
     }
 
+    if (!name || !email || !phone) {
+      return res.status(400).json({
+        message: "بيانات العميل مطلوبة",
+      });
+    }
+
     // -----------------------------
     // Get customer
     // -----------------------------
 
-
-
-
+    // لو عندك customer ID وعايز تربطه بالـ Payment
+    // هنعمله هنا.
+    //
+    // حاليًا لو الدفع ممكن يكون لشخص غير مسجل:
+    const customerId = customer || null;
 
     // -----------------------------
     // Generate invoice number
@@ -209,14 +219,20 @@ exports.createAdminPayment = async (req, res) => {
     const payment = await Payment.create({
       invoiceNumber,
 
-      customer:  null,
+      customer: customerId,
 
-      name: name,
-      email:  email,
-      phone:  phone,
+      name: name.trim(),
+
+      email: email.trim(),
+
+      phone: phone.trim(),
 
       payableType,
-      payableId: payableType === "other" ? undefined : payableId,
+
+      payableId:
+        payableType === "other"
+          ? undefined
+          : payableId,
 
       amount: Number(amount),
 
@@ -234,41 +250,76 @@ exports.createAdminPayment = async (req, res) => {
     // -----------------------------
     // Create Kashier Session
     // -----------------------------
-const kashierResult = await kashierService.createSession({
-  amount: payment.amount,
-  currency: payment.currency,
-  orderNumber: payment.invoiceNumber,
-  customer: {
-    name: payment.name,
-    email: payment.email,
-    phone: payment.phone,
-    _id: payment.customer,
-  },
-});
+
+    const kashierResult =
+      await kashierService.createSession({
+        amount: payment.amount,
+
+        currency: payment.currency,
+
+        orderNumber: payment.invoiceNumber,
+
+        customer: {
+          _id: payment.customer,
+
+          name: payment.name,
+
+          email: payment.email,
+
+          phone: payment.phone,
+        },
+      });
+
+    // -----------------------------
+    // Kashier Error
+    // -----------------------------
 
     if (!kashierResult.success) {
-      await Payment.findByIdAndUpdate(payment._id, {
-        status: "failed",
-        gatewayResponse: kashierResult.error,
-      });
+      await Payment.findByIdAndUpdate(
+        payment._id,
+        {
+          status: "failed",
+
+          gatewayResponse:
+            kashierResult.error,
+        }
+      );
 
       return res.status(400).json({
         message: "فشل إنشاء رابط الدفع",
+
         error: kashierResult.error,
       });
     }
 
     // -----------------------------
-    // Extract Kashier response
+    // Extract Kashier Response
     // -----------------------------
 
-    const gatewayData = kashierResult.data;
+    const gatewayData =
+      kashierResult.data;
 
     const paymentUrl =
       gatewayData.paymentUrl ||
       gatewayData.url ||
       gatewayData.redirectUrl ||
       gatewayData.checkoutUrl;
+
+    if (!paymentUrl) {
+      await Payment.findByIdAndUpdate(
+        payment._id,
+        {
+          status: "failed",
+
+          gatewayResponse: gatewayData,
+        }
+      );
+
+      return res.status(400).json({
+        message:
+          "تم إنشاء جلسة الدفع ولكن لم يتم الحصول على رابط الدفع",
+      });
+    }
 
     // -----------------------------
     // Update Payment
@@ -282,9 +333,11 @@ const kashierResult = await kashierService.createSession({
       gatewayData.paymentLinkId ||
       gatewayData.paymentLink?.id;
 
-    payment.paymentUrl = paymentUrl;
+    payment.paymentUrl =
+      paymentUrl;
 
-    payment.gatewayResponse = gatewayData;
+    payment.gatewayResponse =
+      gatewayData;
 
     await payment.save();
 
@@ -295,33 +348,50 @@ const kashierResult = await kashierService.createSession({
     return res.status(201).json({
       success: true,
 
-      message: "تم إنشاء الفاتورة ورابط الدفع بنجاح",
+      message:
+        "تم إنشاء الفاتورة ورابط الدفع بنجاح",
 
       data: {
         paymentId: payment._id,
 
-        invoiceNumber: payment.invoiceNumber,
+        invoiceNumber:
+          payment.invoiceNumber,
 
-        amount: payment.amount,
+        amount:
+          payment.amount,
 
-        currency: payment.currency,
+        currency:
+          payment.currency,
 
-        paymentType: payment.paymentType,
+        paymentType:
+          payment.paymentType,
 
-        payableType: payment.payableType,
+        payableType:
+          payment.payableType,
 
-        status: payment.status,
+        payableId:
+          payment.payableId,
 
-        paymentUrl: payment.paymentUrl,
+        status:
+          payment.status,
+
+        paymentUrl:
+          payment.paymentUrl,
       },
     });
 
   } catch (error) {
-    console.error("Create Admin Payment Error:", error);
+    console.error(
+      "Create Admin Payment Error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: "حدث خطأ داخلي في الخادم",
+
+      message:
+        "حدث خطأ داخلي في الخادم",
+
       error: error.message,
     });
   }
