@@ -43,8 +43,8 @@ merchantRedirect:
         allowedMethods: 'card',
         customer: {
           email: order.customer?.email  ||  order?.order.customer?.email ,
-          name: order.customer?.name || order?.order.customer?.name,
-          phone: order.customer?.phone || order?.order.customer?.phone,
+          // name: order.customer?.name || order?.order.customer?.name,
+          // phone: order.customer?.phone || order?.order.customer?.phone,
           reference: order.customer?._id || order?.order.customer?._id,
         },
         merchantId: this.merchantId,
@@ -56,8 +56,8 @@ merchantRedirect:
         metaData: {
           orderNumber: order.orderNumber || order?.order.orderNumber,
           customerName: order.customer?.name || order?.order.customer?.name,
-          customerEmail: order.customer?.email || order?.order.customer?.email,
-          customerPhone: order.customer?.phone || order?.order.customer?.phone,
+          // customerEmail: order.customer?.email || order?.order.customer?.email,
+          // customerPhone: order.customer?.phone || order?.order.customer?.phone,
           customerId: order.customer?._id || order?.order.customer?._id,
         }
       };
