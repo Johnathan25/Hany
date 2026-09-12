@@ -215,7 +215,7 @@ exports.createAdminPayment = async (req, res) => {
     const kashierOrder = {
       amount: payment.amount,
       currency: payment.currency,
-      orderNumber: payment.invoiceNumber,
+      orderNumber: invoiceNumber,
       customer: {
         _id: payment.customer ? payment.customer.toString() : payment._id.toString(),
         name: payment.name,
