@@ -12,6 +12,7 @@ const kashierService = new KashierService();
 exports.createInventionRequest = async (req, res) => {
   try {
     const userId = req.user.userId;
+       console.log("EMAIL =>", req.body.email);
 
     const {
       inventionId,
