@@ -211,11 +211,11 @@ exports.createAdminPayment = async (req, res) => {
     const payment = await Payment.create({
       invoiceNumber,
 
-      customer: user._id || null,
+      customer: user?._id || null,
 
-      name: user.name || name,
-      email: user.email || email,
-      phone: user.phone || phone,
+      name: user?.name || name,
+      email: user?.email || email,
+      phone: user?.phone || phone,
 
       payableType,
       payableId: payableType === "other" ? undefined : payableId,
@@ -240,10 +240,10 @@ exports.createAdminPayment = async (req, res) => {
     const kashierResult = await kashierService.createSession({
       payment,
       customer: {
-        name: user.name || name,
-        email: user.email || email,
-        phone: user.phone || phone,
-        _id: user._id || null,
+        name: user?.name || name,
+        email: user?.email || email,
+        phone: user?.phone || phone,
+        _id: user?._id || null,
       },
     });
 
