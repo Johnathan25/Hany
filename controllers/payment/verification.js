@@ -1,10 +1,10 @@
 
 const ServiceRequest =require(`${__dirname}/../../models/ServiceRequest`);
 const Payment =require(`${__dirname}/../../models/Payment`)
-const User = require("../../models/User");
-const kashierService = require("../../service/kashierService");
+const kashierService1 = require("../../service/kashierService");
 
 
+const kashierService = new kashierService1();
 exports.kashierWebhook = async (req, res) => {
   try {
 
@@ -325,4 +325,3 @@ exports.createAdminPayment = async (req, res) => {
     });
   }
 };
-
