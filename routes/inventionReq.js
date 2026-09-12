@@ -65,7 +65,7 @@ router.use(
 
 // all invention requests
 router.get(
-  "/admin",
+  "/",
   getAllInventionRequests
 );
 
@@ -73,7 +73,7 @@ router.get(
 
 //  specific invention request by id
 router.get(
-  "/admin/:id",
+  "/:id",
   getInventionRequestById
 );
 
