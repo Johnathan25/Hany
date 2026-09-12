@@ -12,8 +12,8 @@ const kashierService = new KashierService();
 exports.createInventionRequest = async (req, res) => {
   try {
     const userId = req.user.userId;
-       console.log("EMAIL =>", req.body.email);
 
+    
     const {
       inventionId,
       pricingOptionId,
@@ -104,6 +104,7 @@ exports.createInventionRequest = async (req, res) => {
     // CREATE REQUEST
     // ==========================================
 
+    const existemail=email
     const inventionRequest =
       await InventionRequest.create({
         invention: invention._id,
@@ -153,7 +154,7 @@ exports.createInventionRequest = async (req, res) => {
           customer: {
             _id: userId,
             name: customerName,
-            email,
+             email: existemail  ,
             phone,
           },
         },
