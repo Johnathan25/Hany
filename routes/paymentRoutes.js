@@ -4,7 +4,8 @@ const router = express.Router();
 const {
   kashierWebhook,
   paymentRedirect,
-  createAdminPayment
+  createAdminPayment,
+  getInvoiceTypePayments
 } = require("../controllers/payment/verification");
 
 const authMiddleware = require("../middlewares/authMiddleware");
