@@ -90,7 +90,17 @@ exports.kashierWebhook = async (req, res) => {
           status: "paid",
         }
       );
+    }else if (payment.payableType === "InventionRequest") {
+      const InventionRequest = require("../../models/InventionRequest");
+      await InventionRequest.findByIdAndUpdate(
+        payment.payableId,
+        { 
+          status: "paid",
+        }
+      );
     }
+
+
 
 
 

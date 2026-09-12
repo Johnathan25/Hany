@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const Invention = require("../../models/Invention");
 const InventionRequest = require("../../models/InventionRequest");
 const KashierService = require("../../service/kashierService");
-
+const paymentModel = require("../../models/Payment");
 const kashierService = new KashierService();
 
 
@@ -158,6 +158,20 @@ exports.createInventionRequest = async (req, res) => {
             phone,
           },
         },
+      });
+
+      await paymentModel.create({
+        customer: userId,
+        name: customerName,
+        email: existemail,
+        phone,
+        payableType: "InventionRequest",
+        payableId: inventionRequest._id,    
+        amount: pricingOption.depositAmount,
+        currency: "EGP",
+        paymentType: "deposit",
+        status: "pending",
+        provider: "kashier",
       });
 
 
