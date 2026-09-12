@@ -171,6 +171,7 @@ exports.createInventionRequest = async (req, res) => {
         paymentType: "deposit",
         status: "pending",
         provider: "kashier",
+         reference: orderNumber,
       });
 
 
