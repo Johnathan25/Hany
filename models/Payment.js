@@ -6,7 +6,7 @@ const paymentSchema = new mongoose.Schema(
     customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+     
     },
 
     name: {
@@ -34,7 +34,7 @@ const paymentSchema = new mongoose.Schema(
     // refrence to invoices
     payableId: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
+      
     },
 
     // amount of the payment in the specified currency
