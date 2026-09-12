@@ -53,7 +53,7 @@ class KashierService {
         serverWebhook: `${this.baseRedirectUrl}/api/webhooks/kashier`,
         metaData: {
           orderNumber: order.orderNumber,
-          customerName: order.customer.name
+          customerName: order.customer?.name
         }
       };
 
