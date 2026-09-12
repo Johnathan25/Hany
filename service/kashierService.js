@@ -40,10 +40,10 @@ class KashierService {
         type: 'one-time',
         allowedMethods: 'card,wallet',
         customer: {
-          email: order.customer.email,
-          name: order.customer.name,
-          phone: order.customer.phone,
-          reference: order.customer._id
+          email: order.customer?.email,
+          name: order.customer?.name,
+          phone: order.customer?.phone,
+          reference: order.customer?._id
         },
         merchantId: this.merchantId,
         failureRedirect: true,
