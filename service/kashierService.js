@@ -25,7 +25,7 @@ class KashierService {
    * Create a payment session
    */
   async createSession(order) {
-    c
+   
     try {
         // data send to kashier api to create a payment session
       const payload = {
