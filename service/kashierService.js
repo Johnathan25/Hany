@@ -25,7 +25,7 @@ class KashierService {
    * Create a payment session
    */
   async createSession(order) {
-    console.log('Creating payment session for order:', order);
+    c
     try {
         // data send to kashier api to create a payment session
       const payload = {
@@ -34,34 +34,35 @@ class KashierService {
         paymentType: 'credit',
         amount: order.amount.toFixed(2),
         currency: order.currency || 'EGP',
-        order: order.orderNumber,
+        order: order.orderNumber || order.order.orderNumber,
          merchantRedirect:
-        `${this.frontendUrl}/payment?order=${order.orderNumber}`,
+        `${this.frontendUrl}/payment?order=${order.orderNumber || order.order.orderNumber}}`,
         display: 'en',
         type: 'one-time',
         allowedMethods: 'card,wallet',
         customer: {
-          email: order.customer?.email,
-          name: order.customer?.name,
-          phone: order.customer?.phone,
-          reference: order.customer?._id || "sdjkfsdfkfjksdk"
+          email: order.customer?.email  ||  order.order.customer?.email ,
+          name: order.customer?.name || order.order.customer?.name,
+          phone: order.customer?.phone || order.order.customer?.phone,
+          reference: order.customer?._id || order.order.customer?._id,
         },
         merchantId: this.merchantId,
         failureRedirect: true,
         defaultMethod: 'card',
-        description: `Payment for order ${order.orderNumber}`,
+        description: `Payment for order ${order.orderNumber || order.order.orderNumber}`,
         manualCapture: false,
         serverWebhook: `${this.baseRedirectUrl}/api/webhooks/kashier`,
         metaData: {
-          orderNumber: order.orderNumber,
-          customerName: order.customer?.name
+          orderNumber: order.orderNumber || order.order.orderNumber,
+          customerName: order.customer?.name || order.order.customer?.name,
+          customerEmail: order.customer?.email || order.order.customer?.email,
+          customerPhone: order.customer?.phone || order.order.customer?.phone,
+          customerId: order.customer?._id || order.order.customer?._id,
         }
       };
 
-            console.log(
-  "KASHIER FINAL PAYLOAD:",
-  JSON.stringify(payload, null, 2)
-);
+
+
       const response = await axios.post(
         `${this.baseUrl}/v3/payment/sessions`,
         payload,
