@@ -24,6 +24,7 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const serviceRequest = require("./routes/serviceRequest");
 const complaintRoutes = require("./routes/complaintRoutes");
 const invention = require("./routes/invention");
+const inventionRequest = require("./routes/inventionReq");
 config.connectDB(process.env.DATABASE);
 
 
@@ -42,6 +43,8 @@ app.use('/v1/serviceRequests',serviceRequest);
 app.use("/v1/admins",admins)
 app.use("/v1/complaints", complaintRoutes);
 app.use("/v1/invention", invention);
+app.use("/v1/inventionRequest", inventionRequest);
+
 
 
 app.use("/api/webhooks", paymentRoutes);

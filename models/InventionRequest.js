@@ -12,6 +12,28 @@ const inventionRequestSchema = new mongoose.Schema(
        unique:true,
     },
 
+    // customer contact information
+    phone:{
+      type:String,
+      required:true,
+    },
+    customerName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    address: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+
     customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
