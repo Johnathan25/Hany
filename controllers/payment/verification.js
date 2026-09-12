@@ -234,16 +234,17 @@ exports.createAdminPayment = async (req, res) => {
     // -----------------------------
     // Create Kashier Session
     // -----------------------------
-
-    const kashierResult = await kashierService.createSession({
-      payment,
-      customer: {
-        name: name,
-        email:  email,
-        phone:  phone,
-        _id: null,
-      },
-    });
+const kashierResult = await kashierService.createSession({
+  amount: payment.amount,
+  currency: payment.currency,
+  orderNumber: payment.invoiceNumber,
+  customer: {
+    name: payment.name,
+    email: payment.email,
+    phone: payment.phone,
+    _id: payment.customer,
+  },
+});
 
     if (!kashierResult.success) {
       await Payment.findByIdAndUpdate(payment._id, {
