@@ -24,65 +24,126 @@ class KashierService {
   /**
    * Create a payment session
    */
-  async createSession(order) {
-    
-    try {
-      console.log('Creating Kashier Payment Session for order:', order || order?.order.orderNumber);
-        // data send to kashier api to create a payment session
-      const payload = {
-        expireAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutes
-        maxFailureAttempts: 3,
-        paymentType: 'credit',
-        amount: order.amount.toFixed(2),
-        currency: order.currency || 'EGP',
-        order: order.orderNumber || order?.order.orderNumber,
-merchantRedirect:
-  `${this.frontendUrl}/payment?order=${order.orderNumber || order?.order.orderNumber}`,
-        display: 'en',
-        type: 'one-time',
-        allowedMethods: 'card',
-        customer: {
-          email:customer?.email ||  order.customer?.email  ||  order?.order.customer?.email || "",
-          name: customer?.name || order.customer?.name || order?.order.customer?.name || "",
-          phone:customer?.phone ||  order.customer?.phone || order?.order.customer?.phone || "",
-          reference:customer?._id || order.customer?._id || order?.order.customer?._id || "",
-        },
-        merchantId: this.merchantId,
-        failureRedirect: true,
-        defaultMethod: 'card',
-        description: `Payment for order ${order.orderNumber || order?.order.orderNumber}`,
-        manualCapture: false,
-        serverWebhook: `${this.baseRedirectUrl}/api/webhooks/kashier`,
-        metaData: {
-          orderNumber: order.orderNumber || order?.order.orderNumber,
-          email:customer?.email ||  order.customer?.email  ||  order?.order.customer?.email || "",
-          name: customer?.name || order.customer?.name || order?.order.customer?.name || "",
-          phone:customer?.phone ||  order.customer?.phone || order?.order.customer?.phone || "",
-          reference:customer?._id || order.customer?._id || order?.order.customer?._id || "",
-        }
-      };
+async createSession(order) {
+  try {
+    console.log("Creating Kashier Payment Session for order:", order);
 
+    // Support both:
+    // order.customer
+    // order.order.customer
+    const actualOrder = order?.order || order;
 
+    const customer = actualOrder?.customer || {};
 
-      const response = await axios.post(
-        `${this.baseUrl}/v3/payment/sessions`,
-        payload,
-        { headers: this.getHeaders() }
-      );
+    const orderNumber = actualOrder?.orderNumber;
+    const amount = Number(actualOrder?.amount || 0);
+    const currency = actualOrder?.currency || "EGP";
 
-      return {
-        success: true,
-        data: response.data
-      };
-    } catch (error) {
-      console.error('Kashier Create Session Error:', error.response?.data || error.message);
-      return {
-        success: false,
-        error: error.response?.data || error.message
-      };
+    console.log("Order Number:", orderNumber);
+    console.log("Amount:", amount);
+    console.log("Customer:", customer);
+
+    if (!orderNumber) {
+      throw new Error("Order number is required");
     }
+
+    if (!amount || amount <= 0) {
+      throw new Error("Valid payment amount is required");
+    }
+
+    const payload = {
+      expireAt: new Date(
+        Date.now() + 30 * 60 * 1000
+      ).toISOString(),
+
+      maxFailureAttempts: 3,
+
+      paymentType: "credit",
+
+      amount: amount.toFixed(2),
+
+      currency,
+
+      order: orderNumber,
+
+      merchantRedirect:
+        `${this.frontendUrl}/payment?order=${encodeURIComponent(orderNumber)}`,
+
+      display: "en",
+
+      type: "one-time",
+
+      allowedMethods: "card",
+
+      customer: {
+        email: customer?.email || "",
+        name: customer?.name || "",
+        phone: customer?.phone || "",
+        reference: customer?._id?.toString() || "",
+      },
+
+      merchantId: this.merchantId,
+
+      failureRedirect: true,
+
+      defaultMethod: "card",
+
+      description: `Payment for order ${orderNumber}`,
+
+      manualCapture: false,
+
+      serverWebhook:
+        `${this.baseRedirectUrl}/api/webhooks/kashier`,
+
+      metaData: {
+        orderNumber,
+
+        email: customer?.email || "",
+
+        name: customer?.name || "",
+
+        phone: customer?.phone || "",
+
+        reference: customer?._id?.toString() || "",
+      },
+    };
+
+    console.log(
+      "Kashier Payload:",
+      JSON.stringify(payload, null, 2)
+    );
+
+    const response = await axios.post(
+      `${this.baseUrl}/v3/payment/sessions`,
+      payload,
+      {
+        headers: this.getHeaders(),
+      }
+    );
+
+    console.log(
+      "Kashier Session Response:",
+      response.data
+    );
+
+    return {
+      success: true,
+      data: response.data,
+    };
+
+  } catch (error) {
+
+    console.error(
+      "Kashier Create Session Error:",
+      error.response?.data || error.message
+    );
+
+    return {
+      success: false,
+      error: error.response?.data || error.message,
+    };
   }
-  
+}
 
 
     /**
