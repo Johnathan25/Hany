@@ -58,6 +58,10 @@ class KashierService {
         }
       };
 
+            console.log(
+  "KASHIER FINAL PAYLOAD:",
+  JSON.stringify(payload, null, 2)
+);
       const response = await axios.post(
         `${this.baseUrl}/v3/payment/sessions`,
         payload,
