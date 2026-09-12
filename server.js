@@ -48,7 +48,7 @@ app.use("/v1/inventionRequest", inventionRequest);
 
 
 app.use("/api/webhooks", paymentRoutes);
-app.use("/v1/paymentLink", paymentRoutes);
+app.use("/v1", paymentRoutes);
 
 
 
