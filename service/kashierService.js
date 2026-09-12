@@ -39,7 +39,7 @@ merchantRedirect:
   `${this.frontendUrl}/payment?order=${order.orderNumber || order.order.orderNumber}`,
         display: 'en',
         type: 'one-time',
-        allowedMethods: 'card,wallet',
+        allowedMethods: 'card',
         customer: {
           email: order.customer?.email  ||  order.order.customer?.email ,
           name: order.customer?.name || order.order.customer?.name,

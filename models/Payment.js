@@ -9,10 +9,25 @@ const paymentSchema = new mongoose.Schema(
       required: true,
     },
 
+    name: {
+      type: String,
+      trim: true,
+    },
+
+    phone: {
+      type: String,
+      trim: true,
+    },
+    email: {
+      type: String,
+      trim: true,
+    },
+    
+
     // type of the payable entity: ServiceRequest or InventionRequest
     payableType: {
       type: String,
-      enum: ["ServiceRequest", "InventionRequest"],
+      enum: ["ServiceRequest", "InventionRequest","inventionRequest", "other"],
       required: true,
     },
 

@@ -224,7 +224,7 @@ exports.createInventionRequest = async (req, res) => {
 
 
 // ==========================================
-// GET CUSTOMER REQUESTS
+// GET CUSTOMER REQUESTS 
 // ==========================================
 
 exports.getMyInventionRequests = async (req, res) => {

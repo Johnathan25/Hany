@@ -1,6 +1,10 @@
 
 const ServiceRequest =require(`${__dirname}/../../models/ServiceRequest`);
 const Payment =require(`${__dirname}/../../models/Payment`)
+const User = require("../../models/User");
+const kashierService = require("../../service/kashierService");
+
+
 exports.kashierWebhook = async (req, res) => {
   try {
 
@@ -128,3 +132,189 @@ exports.paymentRedirect = async (req, res) => {
     );
   }
 };
+
+
+exports.createAdminPayment = async (req, res) => {
+  try {
+    const {
+      customer,
+      payableType,
+      payableId,
+      amount,
+      paymentType,
+      description,
+      name,
+      email,
+      phone,
+    } = req.body;
+
+    // -----------------------------
+    // Validation
+    // -----------------------------
+
+
+
+    if (!["ServiceRequest", "InventionRequest", "other"].includes(payableType)) {
+      return res.status(400).json({
+        message: "نوع الفاتورة غير صحيح",
+      });
+    }
+
+    if (payableType !== "other" && !payableId) {
+      return res.status(400).json({
+        message: "payableId مطلوب",
+      });
+    }
+
+    if (!amount || Number(amount) <= 0) {
+      return res.status(400).json({
+        message: "المبلغ يجب أن يكون أكبر من صفر",
+      });
+    }
+
+    if (!["full", "deposit"].includes(paymentType)) {
+      return res.status(400).json({
+        message: "نوع الدفع غير صحيح",
+      });
+    }
+
+    // -----------------------------
+    // Get customer
+    // -----------------------------
+
+    const user = await User.findById(customer).select(
+      "name email phone"
+    );
+
+
+
+    // -----------------------------
+    // Generate invoice number
+    // -----------------------------
+
+    const invoiceNumber = `INV-${Date.now()}`;
+
+    // -----------------------------
+    // Create Payment
+    // -----------------------------
+
+    const payment = await Payment.create({
+      invoiceNumber,
+
+      customer: user._id || null,
+
+      name: user.name || name,
+      email: user.email || email,
+      phone: user.phone || phone,
+
+      payableType,
+      payableId: payableType === "other" ? undefined : payableId,
+
+      amount: Number(amount),
+
+      currency: "EGP",
+
+      paymentType,
+
+      description,
+
+      status: "pending",
+
+      provider: "kashier",
+    });
+
+    // -----------------------------
+    // Create Kashier Session
+    // -----------------------------
+
+    const kashierResult = await kashierService.createSession({
+      payment,
+      customer: {
+        name: user.name || name,
+        email: user.email || email,
+        phone: user.phone || phone,
+        _id: user._id || null,
+      },
+    });
+
+    if (!kashierResult.success) {
+      await Payment.findByIdAndUpdate(payment._id, {
+        status: "failed",
+        gatewayResponse: kashierResult.error,
+      });
+
+      return res.status(400).json({
+        message: "فشل إنشاء رابط الدفع",
+        error: kashierResult.error,
+      });
+    }
+
+    // -----------------------------
+    // Extract Kashier response
+    // -----------------------------
+
+    const gatewayData = kashierResult.data;
+
+    const paymentUrl =
+      gatewayData.paymentUrl ||
+      gatewayData.url ||
+      gatewayData.redirectUrl ||
+      gatewayData.checkoutUrl;
+
+    // -----------------------------
+    // Update Payment
+    // -----------------------------
+
+    payment.sessionId =
+      gatewayData.sessionId ||
+      gatewayData.id;
+
+    payment.paymentLinkId =
+      gatewayData.paymentLinkId ||
+      gatewayData.paymentLink?.id;
+
+    payment.paymentUrl = paymentUrl;
+
+    payment.gatewayResponse = gatewayData;
+
+    await payment.save();
+
+    // -----------------------------
+    // Response
+    // -----------------------------
+
+    return res.status(201).json({
+      success: true,
+
+      message: "تم إنشاء الفاتورة ورابط الدفع بنجاح",
+
+      data: {
+        paymentId: payment._id,
+
+        invoiceNumber: payment.invoiceNumber,
+
+        amount: payment.amount,
+
+        currency: payment.currency,
+
+        paymentType: payment.paymentType,
+
+        payableType: payment.payableType,
+
+        status: payment.status,
+
+        paymentUrl: payment.paymentUrl,
+      },
+    });
+
+  } catch (error) {
+    console.error("Create Admin Payment Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "حدث خطأ داخلي في الخادم",
+      error: error.message,
+    });
+  }
+};
+

@@ -12,6 +12,7 @@ exports.createInvention = async (req, res) => {
       details,
       pricingOptions,
       isActive,
+      
     } = req.body;
 
     // Validation

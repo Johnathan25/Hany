@@ -4,7 +4,11 @@ const router = express.Router();
 const {
   kashierWebhook,
   paymentRedirect,
+  createAdminPayment
 } = require("../controllers/payment/verification");
+
+const authMiddleware = require("../middlewares/authMiddleware");
+const authorizationMiddleware = require(`${__dirname}/../middlewares/authorization`);
 
 // =========================================
 // Kashier Webhook
@@ -23,5 +27,15 @@ router.get(
   "/redirect",
   paymentRedirect
 );
+
+
+
+router.use(authMiddleware.protected);
+router.use(authorizationMiddleware.role('superadmin', 'manager')); 
+router.post(
+  "/paymentLink",
+  createAdminPayment
+);
+
 
 module.exports = router;
