@@ -207,8 +207,7 @@ exports.createAdminPayment = async (req, res) => {
       description,
       status: "pending",
       provider: "kashier",
-      refrence: invoiceNumber,
-
+      reference: invoiceNumber,
     });
 
     // -----------------------------
