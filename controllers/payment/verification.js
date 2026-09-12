@@ -147,7 +147,7 @@ exports.paymentRedirect = async (req, res) => {
 exports.createAdminPayment = async (req, res) => {
   try {
     const {
-      customer, // ID أو كائن العميل إن وجد
+      customer, // ID أو كائن العميل إن وجد (اختياري)
       payableType,
       payableId,
       amount,
@@ -200,7 +200,7 @@ exports.createAdminPayment = async (req, res) => {
       email,
       phone,
       payableType,
-      payableId: payableType === "other" ? undefined : payableId,
+      payableId: payableType === "other" ? null : payableId,
       amount: Number(amount),
       currency: "EGP",
       paymentType,
@@ -210,9 +210,9 @@ exports.createAdminPayment = async (req, res) => {
     });
 
     // -----------------------------
-    // Create Kashier Session
+    // Build order object exactly matching what kashierService.createSession expects
     // -----------------------------
-    const kashierResult = await kashierService.createSession({
+    const kashierOrder = {
       amount: payment.amount,
       currency: payment.currency,
       orderNumber: payment.invoiceNumber,
@@ -222,7 +222,12 @@ exports.createAdminPayment = async (req, res) => {
         email: payment.email,
         phone: payment.phone,
       },
-    });
+    };
+
+    // -----------------------------
+    // Create Kashier Session
+    // -----------------------------
+    const kashierResult = await kashierService.createSession(kashierOrder);
 
     if (!kashierResult.success) {
       await Payment.findByIdAndUpdate(payment._id, {
@@ -240,7 +245,7 @@ exports.createAdminPayment = async (req, res) => {
     // Extract Kashier response
     // -----------------------------
     const gatewayData = kashierResult.data;
-    
+
     // Kashier v3 response standard mapping
     const paymentUrl =
       gatewayData.sessionUrl ||
