@@ -36,8 +36,10 @@ async createSession(order) {
     const customer = actualOrder?.customer || {};
 
     const orderNumber = actualOrder?.orderNumber;
-    const amount = Number(actualOrder?.amount || 0);
+    const amount = Number(actualOrder?.amount || order?.amount || 0);
     const currency = actualOrder?.currency || "EGP";
+
+        console.log("Amount:", amount);
 
     console.log("Order Number:", orderNumber);
     console.log("Amount:", amount);
