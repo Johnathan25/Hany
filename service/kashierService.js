@@ -25,7 +25,7 @@ class KashierService {
    * Create a payment session
    */
   async createSession(order) {
-   
+    
     try {
         // data send to kashier api to create a payment session
       const payload = {
@@ -35,8 +35,8 @@ class KashierService {
         amount: order.amount.toFixed(2),
         currency: order.currency || 'EGP',
         order: order.orderNumber || order.order.orderNumber,
-         merchantRedirect:
-        `${this.frontendUrl}/payment?order=${order.orderNumber || order.order.orderNumber}}`,
+merchantRedirect:
+  `${this.frontendUrl}/payment?order=${order.orderNumber || order.order.orderNumber}`,
         display: 'en',
         type: 'one-time',
         allowedMethods: 'card,wallet',
