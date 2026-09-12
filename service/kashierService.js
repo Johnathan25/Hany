@@ -25,8 +25,9 @@ class KashierService {
    * Create a payment session
    */
   async createSession(order) {
-          console.log('Creating Kashier Payment Session for order:', order || order?.order.orderNumber);
+    
     try {
+      console.log('Creating Kashier Payment Session for order:', order || order?.order.orderNumber);
         // data send to kashier api to create a payment session
       const payload = {
         expireAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutes

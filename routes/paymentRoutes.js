@@ -30,12 +30,22 @@ router.get(
 
 
 
+
+
 router.use(authMiddleware.protected);
 router.use(authorizationMiddleware.role('superadmin', 'manager')); 
 router.post(
   "/paymentLink",
   createAdminPayment
 );
+
+router.get(
+  "/invoiceTypePayments",
+  getInvoiceTypePayments
+);
+
+
+
 
 
 module.exports = router;

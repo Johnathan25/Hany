@@ -3,7 +3,11 @@ const mongoose = require("mongoose");
 const paymentSchema = new mongoose.Schema(
   {
     // customer refrence
-
+    customer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
 
     name: {
       type: String,
@@ -23,14 +27,14 @@ const paymentSchema = new mongoose.Schema(
     // type of the payable entity: ServiceRequest or InventionRequest
     payableType: {
       type: String,
-      enum: ["ServiceRequest", "InventionRequest", "other"],
+      enum: ["ServiceRequest", "InventionRequest", "other","invoiceType"],
       required: true,
     },
 
     // refrence to invoices
     payableId: {
       type: mongoose.Schema.Types.ObjectId,
-   
+      required: true,
     },
 
     // amount of the payment in the specified currency
@@ -108,6 +112,10 @@ const paymentSchema = new mongoose.Schema(
     paidAt: {
       type: Date,
     },
+    invoiceNumber:{
+      type: String,
+      trim: true,
+    }
   },
   {
     timestamps: true,

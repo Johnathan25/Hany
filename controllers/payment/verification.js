@@ -199,14 +199,16 @@ exports.createAdminPayment = async (req, res) => {
       name,
       email,
       phone,
-      payableType,
-      payableId: payableType === "other" ? null : payableId,
+      payableType:"invoiceType" || "others",
+      payableId: null,
       amount: Number(amount),
       currency: "EGP",
       paymentType,
       description,
       status: "pending",
       provider: "kashier",
+      refrence: invoiceNumber,
+
     });
 
     // -----------------------------
@@ -283,6 +285,140 @@ exports.createAdminPayment = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "حدث خطأ داخلي في الخادم",
+      error: error.message,
+    });
+  }
+};
+
+exports.getInvoiceTypePayments = async (req, res) => {
+  try {
+    // -----------------------------
+    // Pagination
+    // -----------------------------
+
+    const page = Math.max(
+      parseInt(req.query.page) || 1,
+      1
+    );
+
+    const limit = Math.min(
+      Math.max(
+        parseInt(req.query.limit) || 10,
+        1
+      ),
+      100
+    );
+
+    const skip = (page - 1) * limit;
+
+    // -----------------------------
+    // Filters
+    // -----------------------------
+
+    const { status, search } = req.query;
+
+    const filter = {
+      payableType: "invoiceType",
+    };
+
+    // Filter by status
+    if (status) {
+      filter.status = status;
+    }
+
+    // -----------------------------
+    // Search
+    // -----------------------------
+
+    if (search) {
+      filter.$or = [
+        {
+          invoiceNumber: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+        {
+          name: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+        {
+          email: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+        {
+          phone: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+      ];
+    }
+
+    // -----------------------------
+    // Get Data
+    // -----------------------------
+
+    const [payments, total] =
+      await Promise.all([
+        Payment.find(filter)
+          .populate(
+            "customer",
+            "username name email phone"
+          )
+          .sort({
+            createdAt: -1,
+          })
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+
+        Payment.countDocuments(filter),
+      ]);
+
+    // -----------------------------
+    // Pagination
+    // -----------------------------
+
+    const totalPages =
+      Math.ceil(total / limit);
+
+    return res.status(200).json({
+      success: true,
+
+      message:
+        "تم جلب الفواتير بنجاح",
+
+      data: payments,
+
+      pagination: {
+        currentPage: page,
+        limit,
+        totalItems: total,
+        totalPages,
+
+        hasNextPage:
+          page < totalPages,
+
+        hasPrevPage:
+          page > 1,
+      },
+    });
+
+  } catch (error) {
+    console.error(
+      "Get Invoice Type Payments Error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "حدث خطأ داخلي في الخادم",
       error: error.message,
     });
   }
