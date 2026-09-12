@@ -25,6 +25,7 @@ class KashierService {
    * Create a payment session
    */
   async createSession(order) {
+    console.log('Creating payment session for order:', order);
     try {
         // data send to kashier api to create a payment session
       const payload = {
@@ -43,7 +44,7 @@ class KashierService {
           email: order.customer?.email,
           name: order.customer?.name,
           phone: order.customer?.phone,
-          reference: order.customer?._id
+          reference: order.customer?._id || "sdjkfsdfkfjksdk"
         },
         merchantId: this.merchantId,
         failureRedirect: true,
