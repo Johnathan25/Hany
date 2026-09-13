@@ -144,7 +144,7 @@ exports.createServiceRequest = async (req, res) => {
           amount: price,
           currency: "EGP",
           paymentType: "full",
-          status: "pending",
+          status: "unpaid",
           provider: "kashier",
           reference: orderNumber,
         },

@@ -66,10 +66,11 @@ const paymentSchema = new mongoose.Schema(
         "processing",
         "paid",
         "failed",
+        "unpaid",
         "refunded",
         "cancelled",
       ],
-      default: "pending",
+      default: "unpaid",
     },
 
     // paymentGateway

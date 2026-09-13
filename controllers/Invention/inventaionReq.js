@@ -169,7 +169,7 @@ exports.createInventionRequest = async (req, res) => {
         amount: pricingOption.depositAmount,
         currency: "EGP",
         paymentType: "deposit",
-        status: "pending",
+        status: "unpaid",
         provider: "kashier",
          reference: orderNumber,
       });
