@@ -22,8 +22,8 @@ router.put('/reset-password', usersController.resetPassword);
 // forget password
 router.put('/forgot-password', usersController.forgetPassword);
 
-router.get('/profile', usersController2.getProfile);
-router.put('/updateProfile', usersController2.updateProfile);
+router.get('/profile', authMiddleware.protected, usersController2.getProfile);
+router.put('/updateProfile',authMiddleware.protected, usersController2.updateProfile);
 
 
 router.get('/:ID', usersController.getInfo);
