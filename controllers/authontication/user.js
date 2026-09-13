@@ -51,7 +51,7 @@ exports.updateProfile=async(req,res)=>{
       userId,
       query,
       { new: true, runValidators: true }
-    ).select("-password , -refreshToken.token");
+    ).select("-password -refreshToken.token")
 
 
     if (!user) {
