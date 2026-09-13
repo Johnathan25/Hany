@@ -41,7 +41,7 @@ exports.updateProfile=async(req,res)=>{
     if (userName) update.userName = userName;
     if (email) update.email = email;
     if (address) update.address = address;
-    if (phoneNumber) update.phoneNumber = phoneNumber;
+    if (phoneNumber) update.phone = phoneNumber;
 
     const query = { $set: update };
 
@@ -51,7 +51,7 @@ exports.updateProfile=async(req,res)=>{
       userId,
       query,
       { new: true, runValidators: true }
-    );
+    ).select("-password , -refreshToken.token");
 
 
     if (!user) {
