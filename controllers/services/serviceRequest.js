@@ -225,7 +225,7 @@ const paymentUrl =
 
     payment.sessionId = sessionId;
     payment.gatewayResponse = sessionData;
-    payment.status = "processing";
+    payment.status = "unpaid";
 
     await payment.save({ session });
 
