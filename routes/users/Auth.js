@@ -2,6 +2,11 @@ const express = require(`express`);
 const router=express.Router();
 const authMiddleware = require(`${__dirname}/../../middlewares/authMiddleware`);
 const usersController = require(`${__dirname}/../../controllers/authontication/auth`);
+const usersController2 = require(`${__dirname}/../../controllers/authontication/user`);
+
+
+
+
 
 // login route
 router.post('/login', usersController.login);
@@ -27,7 +32,8 @@ router.post('/logout', usersController.userLogout);
 router.post('/auth', usersController.auth);
 
 
-
+router.get('/profile', usersController2.getProfile);
+router.put('/updateProfile', usersController2.updateProfile);
 
 
 // update password

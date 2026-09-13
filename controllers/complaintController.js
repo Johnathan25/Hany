@@ -41,7 +41,7 @@ exports.createComplaint = async (req, res) => {
     // إرسال الإيميل
 const info = await transporter.sendMail({
   from: `"نظام الشكاوى" <${process.env.EMAIL_USER}>`,
-  to: "kiroloesreda@gmail.com",
+  to: "hanywilliam1000@gmail.com",
   subject: `شكوى جديدة - ${title}`,
 
   html: `
