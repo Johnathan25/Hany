@@ -19,7 +19,7 @@ const pricingOptionSchema = new mongoose.Schema(
     // null = شراء كامل أو بدون مدة محددة
     durationYears: {
       type: Number,
-      min: 1,
+
       default: null,
     },
 
