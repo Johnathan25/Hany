@@ -149,6 +149,7 @@ exports.createInventionRequest = async (req, res) => {
 
         order: {
           orderNumber,
+          currency: "EUR",
 
           customer: {
             _id: userId,
