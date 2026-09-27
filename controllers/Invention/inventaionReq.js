@@ -145,7 +145,7 @@ exports.createInventionRequest = async (req, res) => {
       await kashierService.createSession({
         amount: pricingOption.depositAmount,
 
-        currency: "EGP",
+        currency: "EUR",
 
         order: {
           orderNumber,
@@ -167,7 +167,7 @@ exports.createInventionRequest = async (req, res) => {
         payableType: "InventionRequest",
         payableId: inventionRequest._id,    
         amount: pricingOption.depositAmount,
-        currency: "EGP",
+        currency: "EUR",
         paymentType: "deposit",
         status: "unpaid",
         provider: "kashier",
@@ -210,7 +210,7 @@ exports.createInventionRequest = async (req, res) => {
       payment: {
         amount: pricingOption.depositAmount,
 
-        currency: "EGP",
+        currency: "EUR",
 
         kashier: paymentResult.data,
       },
