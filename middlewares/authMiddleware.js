@@ -4,18 +4,18 @@ const User = require(`${__dirname}/../models/User`);
 exports.protected = async (req, res, next) => {
   try {
     // ================= API KEY =================
-    const apiKey = req.headers["x-api-key"];
+    // const apiKey = req.headers["x-api-key"];
 
-    if (apiKey) {
-      if (apiKey !== process.env.INTERNAL_API_KEY) {
-        return res.status(401).json({
-          message: "Invalid API Key",
-        });
-      }
+    // if (apiKey) {
+    //   if (apiKey !== process.env.INTERNAL_API_KEY) {
+    //     return res.status(401).json({
+    //       message: "Invalid API Key",
+    //     });
+    //   }
 
-      req.system = true;
-      return next();
-    }
+    //   req.system = true;
+    //   return next();
+    // }
 
     // ================= JWT =================
     const authHeader = req.headers.authorization;
@@ -38,8 +38,13 @@ exports.protected = async (req, res, next) => {
       });
     }
 
-    req.user = decoded;
+    //req.user = decoded;
     
+    // Store the real user from database
+    req.user = user;
+
+    // Keep JWT data if needed
+    req.auth = decoded;
 
     next();
   } catch (error) {

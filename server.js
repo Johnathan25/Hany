@@ -1,31 +1,30 @@
 const express = require('express');
 
-require('dotenv').config()
+require('dotenv').config();
+
 const app = express();
-
-
 
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
+
 app.set('trust proxy', true);
-const cors =require('cors')
+
+const cors = require('cors');
 const bodyParser = require('body-parser');
+
 app.use(cors({
   origin: true,
   credentials: true
 }));
 
 
-const config=require(`${__dirname}/config/configDB`);
-const serviceRoutes=require(`${__dirname}/routes/serviceRoutes`);
-const userRoute=require(`${__dirname}/routes/users/Auth`);
-const admins =require(`${__dirname}/routes/users/admin`);
-const paymentRoutes = require("./routes/paymentRoutes");
-const serviceRequest = require("./routes/serviceRequest");
-const complaintRoutes = require("./routes/complaintRoutes");
-const invention = require("./routes/invention");
-const inventionRequest = require("./routes/inventionReq");
-const dash = require("./routes/dash");
+const config = require(`${__dirname}/config/configDB`);
+const userRoute = require(`${__dirname}/routes/Auth`);
+const websiteSettingRoute = require(`${__dirname}/routes/website/website`);
+const { connectRedis } = require("./config/redis");
+
+
+// MongoDB
 config.connectDB(process.env.DATABASE);
 
 
@@ -33,30 +32,30 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
+app.use('/v1/users', userRoute);
+app.use('/v1/websiteSettings', websiteSettingRoute);
 
 
 
-
-app.use('/v1/users',userRoute);
-app.use('/v1/serviceMangement',serviceRoutes);
-app.use('/v1/serviceRequests',serviceRequest);
-
-app.use("/v1/admins",admins)
-app.use("/v1/complaints", complaintRoutes);
-app.use("/v1/invention", invention);
-app.use("/v1/inventionRequest", inventionRequest);
-app.use("/v1/dash", dash);
+const PORT = process.env.PORT || 5000;
 
 
+// Start Server
+const startServer = async () => {
+  try {
 
+    // Connect Redis
+    await connectRedis();
 
-app.use("/api/webhooks", paymentRoutes);
-app.use("/v1", paymentRoutes);
+    // Start Express
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
 
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+};
 
-
-
-const PORT=process.env.PORT || 5000;
-app.listen(PORT,()=>{
-    console.log(`Server is running on port ${PORT}`);
-})
+startServer();
