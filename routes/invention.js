@@ -15,6 +15,7 @@ const {
 const authMiddleware = require("../middlewares/authMiddleware");
 const authorizationMiddleware = require(`${__dirname}/../middlewares/authorization`);
 
+router.use(authMiddleware.protected);
 
 // Get All + Pagination + Search
 router.get(
@@ -28,10 +29,6 @@ router.get(
   "/client/:id",
   getActiveInventionById
 );
-
-
-router.use(authMiddleware.protected);
-
 
 
 router.use(authorizationMiddleware.role('superadmin', 'manager')); 

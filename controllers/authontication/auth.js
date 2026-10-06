@@ -3,7 +3,7 @@ const { console } = require('inspector');
 const jwt = require('jsonwebtoken');
 const User = require(`${__dirname}/../../models/User`);
 const nodemailer = require('nodemailer');
-const SlugMember = require('../../models/Slug');
+
 
 const {Resend} = require('resend');
 
@@ -81,165 +81,85 @@ exports.refreshToken = async (req, res) => {
 //login
 exports.login = async (req, res) => {
   try {
-    const DOMAIN_NAME = process.env.DOMAIN_NAME || "localhost";
-
-    const hostname = req.hostname;
-    const slug = hostname.split(".")[0];
-
     const { email, password } = req.body;
 
+
     if (!email || !password) {
-      return res.status(400).json({
-        message: "الرجاء إدخال البريد الإلكتروني وكلمة المرور",
-      });
-    }
-
-    // 1️⃣ Get ALL users with this email
-    const users = await User.find({ email }).select("+password");
-
-    if (!users || users.length === 0) {
-      return res.status(401).json({
-        message: "البريد الإلكتروني أو كلمة المرور غير صحيحة",
-      });
-    }
-
-    let user = null;
-
-
-    // MAIN DOMAIN
-
-
-    if (DOMAIN_NAME === slug) {
-      //main domain
-      
-
-      user = users.find(
-        (u) => u.role === "superadmin" || u.role === "admin"
-      );
-
-
-      if (!user) {
-        user = users[0];
-      }
+      return res.status(400).json({ message: "الرجاء إدخال البريد الإلكتروني وكلمة المرور" });
     }
 
 
-    // SLUG / STORE DOMAIN
-
-
-    else {
-      //  Get ALL memberships for this slug + email
-      const slugMembers = await SlugMember.find({
-        slug: slug,
-        email: email,
-      });
-
-      if (!slugMembers || slugMembers.length === 0) {
-        return res.status(403).json({
-          message: "ليس لديك صلاحية الدخول لهذا المتجر",
-        });
-      }
-
-      //  Find the User connected to this slug
-      user = users.find((u) =>
-        slugMembers.some(
-          (member) => member.userId.toString() === u._id.toString()
-        )
-      );
-
-      if (!user) {
-        return res.status(403).json({
-          message: "ليس لديك صلاحية الدخول لهذا المتجر",
-        });
-      }
+    const user = await User.findOne({ email }).select("+password");
+    if (!user) {
+      return res.status(401).json({ message: "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
     }
 
-
-    // USER VALIDATION
-
-
-    if (!user.isVerified) {
-      return res.status(401).json({
-        message: "هذا الايميل محظور من قبل الادمن تواصل مع الادمن",
-      });
+    if(!user.isVerified){
+      return res.status(401).json({ message: "هذا الايميل محظور من قبل الادمن تواصل مع الادمن "});
     }
 
-
-    // PASSWORD
-
-
-    const isPasswordValid = await bcrypt.compare(
-      password,
-      user.password
-    );
-
+    
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(401).json({
-        message: "البريد الإلكتروني أو كلمة المرور غير صحيحة",
-      });
+      return res.status(401).json({ message: "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
     }
 
 
-    // JWT
 
+  
 
     const refreshPayload = {
       userId: user._id,
       role: user.role,
-      email: user.email,
+      email: user.email
     };
 
     const refreshToken = jwt.sign(
       refreshPayload,
       process.env.REFRESH_JWT_SECRET,
-      {
-        expiresIn: "1d",
-      }
+      { expiresIn: user.role === "superadmin" ? "1d" : "1d" }
     );
 
     user.refreshToken.token = await bcrypt.hash(refreshToken, 10);
     user.refreshToken.isRevoked = false;
     user.lastLogin = new Date();
-
     await user.save();
 
-
-    // COOKIE
-
+    // res.cookie("refreshToken", refreshToken, {
+    //   httpOnly: true,
+    //   sameSite: "lax",
+    //   secure: false, 
+    //   maxAge: user.role === "admin"
+    //     ? 7 * 24 * 60 * 60 * 1000
+    //     : 24 * 60 * 60 * 1000
+    // });
 
     res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      sameSite: "none",
-      secure: true,
-      maxAge:
-        user.role === "admin"
-          ? 7 * 24 * 60 * 60 * 1000
-          : 24 * 60 * 60 * 1000,
-    });
+  httpOnly: true,
+  sameSite: "none",        // مهم جدًا
+  secure: true,            // لازم مع none
+  maxAge: user.role === "admin"
+    ? 7 * 24 * 60 * 60 * 1000
+    : 24 * 60 * 60 * 1000
+});
 
-
-    // ACCESS TOKEN
-
-
+  
     const accessToken = jwt.sign(
       refreshPayload,
       process.env.ACCESS_JWT_SECRET,
-      {
-        expiresIn: "15m",
-      }
+      { expiresIn: "15m" }
     );
 
-    return res.status(200).json({
+    res.status(200).json({
       message: `تم تسجيل دخول ${user.role} بنجاح`,
-      accessToken,
+      accessToken
     });
 
   } catch (err) {
     console.error("خطأ في تسجيل الدخول:", err);
-
-    return res.status(500).json({
+    res.status(500).json({
       message: "خطأ داخلي في الخادم",
-      error: err.message,
+      error: err.message
     });
   }
 };
@@ -248,33 +168,29 @@ exports.login = async (req, res) => {
 // signUp 
 exports.signUp = async (req, res) => {
   try {
-    const hostname = req.hostname;
-    const slug=hostname.split(".")[0];
-    const {userName, email, password  ,phoneNumber ,newSlug } = req.body;
-    const DOMAIN_NAME = process.env.DOMAIN_NAME || 'localhost';
+    const {userName, email, password , address ,phoneNumber } = req.body;
     if (!userName || !email || !password) {
       return res.status(400).json({ message: "الرجاء توفير جميع الحقول المطلوبة" });
     }
-      const existingUser = await User.findOne(
-    
-        { email }
-      
-      
-    );
-
-    if(existingUser && DOMAIN_NAME ==slug && existingUser.role !== "client"){
-      return res.status(400).json({ message: "هذا المستخدم موجود بالفعل" });
-
+  const existingUser = await User.findOne(
+ 
+    { email }
+  
+  
+);
+    if (existingUser) {
+      return res.status(400).json({ message: "البريد الإلكتروني  مستخدم بالفعل" });
     }
+  const existingUser2 = await User.findOne(
+ 
+    { phoneNumber }
+  
+  
+);
 
-
-    const existingSlugMember = await SlugMember.findOne({ slug: slug, email: existingUser ? existingUser.email : null });
-
-    if (existingUser && existingSlugMember) {
-      return res.status(400).json({ message: "هذا المستخدم موجود بالفعل في هذا المتجر" });
+    if (existingUser2) {
+      return res.status(400).json({ message: "   رقم الهاتف مستخدم بالفعل" });
     }
-
-
 
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -282,28 +198,12 @@ exports.signUp = async (req, res) => {
       userName,
         email,
         password: hashedPassword,
-      
+        address,
         phoneNumber
     });
 
-    if(DOMAIN_NAME === slug && !existingUser) {
-            await SlugMember.create({slug:newSlug,userId:newUser._id,email:newUser.email});
 
-    }
-
-
-   
-
-    if(DOMAIN_NAME !=slug){
-     await SlugMember.create({slug:slug,userId:newUser._id,email:newUser.email
-
-     });
-     newUser.role="client";
-    }
-
-     await newUser.save();
-    
-
+    await newUser.save();
     res.status(201).json({ message: "تم إنشاء الحساب بنجاح" });
 
   } catch (err) {
@@ -312,13 +212,12 @@ exports.signUp = async (req, res) => {
   }
 };
 
-
 // logout
 exports.userLogout = async (req, res) => {
   try {
     const userId = req.user.userId; // من middleware
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ message: "المستخدم غير موجود" });
+    if (!user) return res.status(404).json({ message: "المشرف غير موجود" });
 
     user.refreshToken.token = null;
     await user.save();
@@ -332,8 +231,7 @@ exports.userLogout = async (req, res) => {
 };
 
 // updatePassword
-exports.updatePassword = async(req,res)=>{ 
-
+exports.updatePassword = async(req,res)=>{
        const { currentPassword, newPassword}=req.body;
        const userId=req.user.userId;
 
@@ -370,81 +268,17 @@ exports.updatePassword = async(req,res)=>{
 //forgetPassword
 exports.forgetPassword = async (req, res) => {
   const { email } = req.body;
-  const hostname = req.hostname;
-  const slug=hostname.split(".")[0];
-  const DOMAIN_NAME = process.env.DOMAIN_NAME || 'localhost';
 
   try {
     if (!email) {
       return res.status(400).json({ message: "الرجاء إدخال بريدك الإلكتروني" });
     }
 
-    const users = await User.find({ email: email });
-    if (!users || users.length === 0) {
+    const user = await User.findOne({ email: email });
+    if (!user) {
       return res.status(404).json({
         message: "إذا كان البريد الإلكتروني موجوداً، تم إرسال رابط إعادة التعيين"
       });
-    }
-
-    
-    let user = null;
-
-
-    // MAIN DOMAIN
-
-
-    if (DOMAIN_NAME === slug) {
-      //main domain
-      
-
-      user = users.find(
-        (u) => u.role === "superadmin" || u.role === "admin"
-      );
-
-      if (!user) {
-        user = users[0];
-      }
-    }
-
-
-    // SLUG / STORE DOMAIN
-
-
-    else {
-      //  Get ALL memberships for this slug + email
-      const slugMembers = await SlugMember.find({
-        slug: slug,
-        email: email,
-      });
-
-      if (!slugMembers || slugMembers.length === 0) {
-        return res.status(403).json({
-          message: "ليس لديك صلاحية الدخول لهذا المتجر",
-        });
-      }
-
-      //  Find the User connected to this slug
-      user = users.find((u) =>
-        slugMembers.some(
-          (member) => member.userId.toString() === u._id.toString()
-        )
-      );
-
-      if (!user) {
-        return res.status(403).json({
-          message: "ليس لديك صلاحية الدخول لهذا المتجر",
-        });
-      }
-    }
-
-
-
-
-
-
-
-       if(user.isVerified===false){
-      return res.status(403).json({ message: "تم حظر حسابك من قبل الادمن تواصل مع الادمن" });
     }
 
     // إنشاء رمز إعادة التعيين وتاريخ الانتهاء
@@ -491,7 +325,6 @@ exports.forgetPassword = async (req, res) => {
 
     res.status(200).json({
       message: "إذا كان البريد الإلكتروني موجوداً، تم إرسال رابط إعادة التعيين"
-      ,user:user.role
     });
   } catch (err) {
     res.status(500).json({ message: "خطأ داخلي في الخادم", error: err.message });
@@ -501,8 +334,6 @@ exports.forgetPassword = async (req, res) => {
 // resetPassword
 exports.resetPassword = async(req,res)=>{
     const {email,resetCode,newPassword}=req.body;
-  
-
 
     try{
         if(!email || !resetCode || !newPassword){
@@ -512,8 +343,6 @@ exports.resetPassword = async(req,res)=>{
         if(!user){
             return res.status(400).json({message:"البريد الإلكتروني أو رمز إعادة التعيين غير صالح"});
         }
-
-
     
         if(Date.now()>user.passwordResetExpires){
             return res.status(400).json({message:"انتهت صلاحية رمز إعادة التعيين"});
@@ -539,8 +368,61 @@ exports.resetPassword = async(req,res)=>{
      
 }
 
+exports.auth=async(req,res)=>{
+  try{
+      const { email } = req.user;
+
+      if (!email ) {
+      return res.status(400).json({ message: "خطاء في المصادقه" });
+    }
 
 
+    const user = await User.findOne({ email },{username:1,role:1,email:1,isVerified:1}).select("-password");
+    if (!user) {
+      return res.status(401).json({ message: "غير مسموح لك للدخول لهذا السيستم" });
+    }
+
+    if(!user.isVerified){
+      return res.status(401).json({ message: "هذا المستخدم محظور من قبل الادمن تواصل مع الادمن "});
+    }
+
+      res.status(200).json({
+      user
+    });
+
+    
+
+  }catch(err){
+
+    res.status(500).json({
+      message: "خطأ داخلي في الخادم",
+      error: err.message
+    });
+  }
+}
+
+exports.getInfo = async (req, res) => {
+  try {
+    const { ID } = req.params;
+
+
+
+    const user = await User.findById(ID).select("username role email");
+
+
+
+    return res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "خطأ داخلي في الخادم",
+      error: err.message,
+    });
+  }
+};
 
 
 
